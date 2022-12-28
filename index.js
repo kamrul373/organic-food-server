@@ -6,6 +6,7 @@ const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cors());
+const stripe = require("stripe")(`${process.env.STRIPE_PK}`);
 
 // mongodb
 
@@ -42,6 +43,24 @@ async function run() {
         const result = await categoriesCollection.find(query).toArray();
 
         res.send(result)
+    })
+    app.post("/create-payment-intent", async (req, res) => {
+        const order = req.body;
+        const totalPrice = order.total;
+        const amount = totalPrice * 100;
+
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: "usd",
+            "payment_method_types": [
+                "card"
+            ],
+
+        })
+        res.send({
+            clientSecret: paymentIntent.client_secret,
+        })
     })
 
 
